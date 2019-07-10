@@ -2,6 +2,9 @@ import socket
 import json
 import yaml
 import argparse
+import logging
+import log.server_log_config
+
 from actions import resolve, get_server_actions
 from protocol import (
     validate_request, make_response, make_400, make_404
@@ -29,17 +32,19 @@ if args.config:
         buffersize = conf.get('buffersize', BUFFERSIZE)
         encoding = conf.get('encoding', ENCODING)
 
+logger = logging.getLogger('server.main')
+
 try:
     sock = socket.socket()
     sock.bind((host, port))
     sock.listen(5)
     server_actions = get_server_actions()
 
-    print('server started')
+    logger.info('server started')
 
     while True:
         client, address = sock.accept()
-        print(f'client with address {address} was detected')
+        logger.info(f'client with address {address} was detected')
 
         b_request = client.recv(buffersize)
         request = json.loads(b_request.decode(encoding))
@@ -51,17 +56,17 @@ try:
                 try:
                     response = controller(request)
                 except Exception as err:
-                    print(err)
+                    logger.critical(err)
                     response = make_response(request, 500, 'Internal server error')
             else:
-                print(f'Action with name {action_name } does not exists')
+                logger.error(f'Action with name {action_name } does not exists')
                 response = make_404(request)
         else:
-            print('request is not valid')
+            logger.error('request is not valid')
             response = make_400(request)
 
         s_response = json.dumps(response)
         client.send(s_response.encode(encoding))
         client.close()
 except KeyboardInterrupt:
-    print('server closed')
+    logger.info('server closed')

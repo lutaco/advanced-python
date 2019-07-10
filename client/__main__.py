@@ -2,6 +2,8 @@ import yaml
 import json
 import socket
 import argparse
+import logging
+import log.client_log_config
 
 from settings import (
     HOST, PORT, BUFFERSIZE, ENCODING,
@@ -28,10 +30,12 @@ if args.config:
         buffersize = conf.get('buffersize', BUFFERSIZE)
         encoding = conf.get('encoding', ENCODING)
 
+logger = logging.getLogger('client.main')
+
 try:
     sock = socket.socket()
     sock.connect((host, port))
-    print('Client started')
+    logger.info('Client started')
     data = input('enter data to sent: ')
 
     request = json.dumps({
@@ -43,8 +47,9 @@ try:
     response = json.loads(
         b_data.decode(encoding)
     )
-    print(response)
+
+    logger.info(response)
     sock.close()
     
 except KeyboardInterrupt:
-    print('Client closed')
+    logger.info('Client closed')

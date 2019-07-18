@@ -3,7 +3,8 @@ import json
 import socket
 import argparse
 import logging
-import log.client_log_config
+import datetime
+from log import log_config
 
 from settings import (
     HOST, PORT, BUFFERSIZE, ENCODING,
@@ -36,9 +37,14 @@ try:
     sock = socket.socket()
     sock.connect((host, port))
     logger.info('Client started')
+
+    action = input('enter action: ')
     data = input('enter data to sent: ')
 
     request = json.dumps({
+        'user': 'anonymous',
+        'time': datetime.datetime.now().timestamp(),
+        'action': action,
         'data': data
     })
 

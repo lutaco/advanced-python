@@ -1,15 +1,16 @@
 import logging
 from os import sys
-from client.settings import ENCODING
+from settings import ENCODING
 
 # Создаем объект-логгер
-logger = logging.getLogger('client.main')
+logger = logging.getLogger('server.main')
+decorators_logger = logging.getLogger('server.decorators')
 
 # Создаем объект форматирования:
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s ")
 
 # Создаем файловый обработчик логирования (можно задать кодировку):
-fh = logging.FileHandler("client.info.log", encoding=ENCODING)
+fh = logging.FileHandler("info.log", encoding=ENCODING)
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 
@@ -22,6 +23,10 @@ std_hand.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(std_hand)
 logger.setLevel(logging.DEBUG)
+
+decorators_logger.addHandler(fh)
+decorators_logger.addHandler(std_hand)
+decorators_logger.setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
     # Создаем потоковый обработчик логирования (по умолчанию sys.stderr):

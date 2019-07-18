@@ -3,13 +3,14 @@ import json
 import yaml
 import argparse
 import logging
-import log.server_log_config
+from log import log_config
 
 from actions import resolve, get_server_actions
 from protocol import (
     validate_request, make_response, make_400, make_404
 )
 from settings import HOST, PORT, BUFFERSIZE, ENCODING
+
 
 host = HOST
 port = PORT
@@ -39,7 +40,6 @@ try:
     sock.bind((host, port))
     sock.listen(5)
     server_actions = get_server_actions()
-
     logger.info('server started')
 
     while True:

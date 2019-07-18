@@ -1,15 +1,15 @@
 import logging
 from os import sys
-from server.settings import ENCODING
+from settings import ENCODING
 
 # Создаем объект-логгер
-logger = logging.getLogger('server.main')
+logger = logging.getLogger('client.main')
 
 # Создаем объект форматирования:
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s ")
 
 # Создаем файловый обработчик логирования (можно задать кодировку):
-fh = logging.FileHandler("server.main.info.log", encoding=ENCODING)
+fh = logging.FileHandler("client.info.log", encoding=ENCODING)
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 

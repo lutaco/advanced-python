@@ -1,14 +1,11 @@
 import socket
-import json
 import yaml
 import argparse
 import logging
+import select
 from log import log_config
 
-from actions import resolve, get_server_actions
-from protocol import (
-    validate_request, make_response, make_400, make_404
-)
+from handlers import default_handler
 from settings import HOST, PORT, BUFFERSIZE, ENCODING
 
 
@@ -35,38 +32,57 @@ if args.config:
 
 logger = logging.getLogger('server.main')
 
+clients = []
+requests = []
+
 try:
     sock = socket.socket()
     sock.bind((host, port))
     sock.listen(5)
-    server_actions = get_server_actions()
+    sock.settimeout(0)
     logger.info('server started')
 
     while True:
-        client, address = sock.accept()
-        logger.info(f'client with address {address} was detected')
 
-        b_request = client.recv(buffersize)
-        request = json.loads(b_request.decode(encoding))
+        try:
+            client, address = sock.accept()
+            logger.info(f'client with address {address}, fd {client.fileno()} was detected')
+            clients.append(client)
+        except OSError as e:
+            pass
 
-        action_name = request.get('action')
-        if validate_request(request):
-            controller = resolve(action_name, server_actions)
-            if controller:
+        r = []
+        w = []
+
+        try:
+            r, w, e = select.select(clients, clients, [], 0)
+        except Exception as e:
+            pass
+
+        for r_client in r:
+            try:
+                b_request = r_client.recv(buffersize)
+
+                if not b_request:
+                    raise socket.error
+
+                requests.append(b_request)
+            except:
+                logger.info(f'client (fd={r_client.fileno()}) disconnected')
+                clients.remove(r_client)
+
+        if len(requests) != 0:
+            b_request = requests.pop()
+            response = default_handler(b_request.decode(encoding))
+            b_response = response.encode(encoding)
+
+            for w_client in w:
                 try:
-                    response = controller(request)
-                except Exception as err:
-                    logger.critical(err)
-                    response = make_response(request, 500, 'Internal server error')
-            else:
-                logger.error(f'Action with name {action_name } does not exists')
-                response = make_404(request)
-        else:
-            logger.error('request is not valid')
-            response = make_400(request)
+                    w_client.send(b_response)
+                except:
+                    logger.info(f'client {w_client.fileno()} disconnected')
+                    clients.remove(w_client)
 
-        s_response = json.dumps(response)
-        client.send(s_response.encode(encoding))
-        client.close()
+
 except KeyboardInterrupt:
     logger.info('server closed')

@@ -21,6 +21,11 @@ parser.add_argument(
     help='Sets run configuration'
 )
 
+parser.add_argument(
+    '-m', '--mode', type=str,
+    help='yay'
+)
+
 args = parser.parse_args()
 
 if args.config:
@@ -31,31 +36,37 @@ if args.config:
         buffersize = conf.get('buffersize', BUFFERSIZE)
         encoding = conf.get('encoding', ENCODING)
 
+mode = args.mode if args.mode else 'r'
 logger = logging.getLogger('client.main')
 
 try:
-    sock = socket.socket()
-    sock.connect((host, port))
-    logger.info('Client started')
+    with socket.socket() as sock:
+        sock.connect((host, port))
+        logger.info('Client started')
+        while True:
 
-    action = input('enter action: ')
-    data = input('enter data to sent: ')
+            if mode == 'w':
 
-    request = json.dumps({
-        'user': 'anonymous',
-        'time': datetime.datetime.now().timestamp(),
-        'action': action,
-        'data': data
-    })
+                action = input('enter action: ')
+                data = input('enter data to sent: ')
 
-    sock.send(request.encode(encoding))
-    b_data = sock.recv(buffersize)
-    response = json.loads(
-        b_data.decode(encoding)
-    )
+                request = json.dumps({
+                    'user': 'anonymous',
+                    'time': datetime.datetime.now().timestamp(),
+                    'action': action,
+                    'data': data
+                })
 
-    logger.info(response)
-    sock.close()
-    
+                sock.send(request.encode(encoding))
+
+            if mode == 'r':
+
+                b_data = sock.recv(buffersize)
+                response = json.loads(
+                    b_data.decode(encoding)
+                )
+
+                logger.info(response)
+
 except KeyboardInterrupt:
     logger.info('Client closed')

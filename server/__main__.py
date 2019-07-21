@@ -39,7 +39,7 @@ try:
     sock = socket.socket()
     sock.bind((host, port))
     sock.listen(5)
-    sock.settimeout(0)
+    sock.settimeout(1)
     logger.info('server started')
 
     while True:
